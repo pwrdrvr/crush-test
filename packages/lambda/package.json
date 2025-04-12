@@ -6,7 +6,8 @@
   "scripts": {
     "build": "esbuild src/handler.ts --bundle --platform=node --target=node20 --sourcemap --outdir=dist",
     "watch": "npm run build -- --watch",
-    "test": "echo \"Error: no test specified\""
+    "test": "echo \"Error: no test specified\"",
+    "docker:build": "npm run build && docker build -t load-test-lambda -f docker/Dockerfile ."
   },
   "keywords": [],
   "author": "",

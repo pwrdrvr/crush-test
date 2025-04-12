@@ -1,0 +1,4 @@
+{
+  "app": "npx ts-node --project packages/cdk/tsconfig.json  --prefer-ts-exts packages/cdk/src/app.ts",
+  "context": {}
+}

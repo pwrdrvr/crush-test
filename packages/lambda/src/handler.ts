@@ -49,42 +49,90 @@ export const handler: Handler<TestPayload> = async (event) => {
   };
 
   // Execute the test tool
-  const args = [...event.args];
+  let args = [...event.args];
   if (testProfilePath) {
     args.push(testProfilePath);
   }
 
+  // If tool is oha, ensure --no-tui and -j are present at the start
+  if (event.tool === 'oha') {
+    const hasNoTui = args.includes('--no-tui');
+    const hasJ = args.includes('-j');
+    const prependArgs: string[] = [];
+    if (!hasNoTui) prependArgs.push('--no-tui');
+    if (!hasJ) prependArgs.push('-j');
+    args = [...prependArgs, ...args];
+  }
+
+  console.log('Running command:', event.tool, args.join(' '));
+  // console.log('Environment:', env);
+
+  // Use the cleaner runProcess helper
+  const { stdout, stderr, exitCode } = await runProcess(event.tool, args, env);
+
+  // With oha's -j flag, the output should be JSON
+  let stdoutField: { type: string; value: any };
+  if (event.tool === 'oha' && stdout) {
+    try {
+      const parsedOutput = JSON.parse(stdout);
+      stdoutField = { type: 'json', value: parsedOutput };
+    } catch (e) {
+      console.error('Failed to parse oha JSON output:', e);
+      stdoutField = { type: 'text', value: stdout };
+    }
+  } else {
+    stdoutField = { type: 'text', value: stdout };
+  }
+
+  console.log('Returning result');
+
+  return {
+    statusCode: exitCode === 0 ? 200 : 500,
+    body: JSON.stringify({
+      stdout: stdoutField,
+      stderr,
+      exitCode
+    })
+  };
+};
+
+/**
+ * Spawns a process and returns a Promise with stdout, stderr, and exitCode.
+ */
+function runProcess(
+  command: string,
+  args: string[],
+  env: NodeJS.ProcessEnv
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   return new Promise((resolve, reject) => {
-    const process = spawn(event.tool, args, { env });
+    const process = spawn(command, args, { env });
     let stdout = '';
     let stderr = '';
 
     process.stdout.on('data', (data) => {
-      stdout += data.toString();
+      const text = data.toString();
+      console.log(text); // Log to CloudWatch
+      stdout += text;
     });
 
     process.stderr.on('data', (data) => {
-      stderr += data.toString();
+      const text = data.toString();
+      console.error(text); // Log to CloudWatch
+      stderr += text;
     });
 
     process.on('close', (code) => {
-      if (code !== 0) {
-        reject(new Error(`Process exited with code ${code}\nStderr: ${stderr}`));
-        return;
-      }
-
+      console.log('Process exited with code:', code);
       resolve({
-        statusCode: 200,
-        body: JSON.stringify({
-          stdout,
-          stderr,
-          exitCode: code
-        })
+        stdout,
+        stderr,
+        exitCode: code ?? -1
       });
     });
 
     process.on('error', (error) => {
+      console.error('Process error:', error);
       reject(error);
     });
   });
-};
+}

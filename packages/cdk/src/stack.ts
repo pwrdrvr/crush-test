@@ -1,46 +1,59 @@
 import * as cdk from 'aws-cdk-lib';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as iam from 'aws-cdk-lib/aws-iam';
+import * as ecrAssets from 'aws-cdk-lib/aws-ecr-assets';
 import { Construct } from 'constructs';
+import * as path from 'path';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { LoadTestFunctionConstruct } from './load-test-function-construct';
+
+export interface LoadTestStackProps extends cdk.StackProps {
+  /**
+   * The name of the Lambda function. If not provided, a default will be used.
+   */
+  functionName?: string;
+  /**
+   * The name of the stack. If not provided, a default will be used.
+   */
+  stackName?: string;
+  /**
+   * Optional environment variables for the Lambda.
+   */
+  environment?: { [key: string]: string };
+  /**
+   * Optional: Use a public Docker image URI instead of building locally.
+   */
+  publicDockerImageUri?: string;
+}
 
 export class LoadTestStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: LoadTestStackProps = {}) {
+    super(scope, props.stackName ?? id, props);
 
-    // Create Lambda function
-    const loadTestFunction = new lambda.Function(this, 'LoadTestFunction', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'handler.handler',
-      code: lambda.Code.fromAsset('../lambda/dist'),
-      timeout: cdk.Duration.minutes(15),
-      memorySize: 1024,
-      environment: {
-        NODE_OPTIONS: '--enable-source-maps',
-      },
-      // Use custom Lambda layer with oha and k6 installed
-      layers: [
-        lambda.LayerVersion.fromLayerVersionArn(
-          this,
-          'TestToolsLayer',
-          // TODO: Replace with your layer ARN containing oha and k6
-          'arn:aws:lambda:us-east-2:123456789012:layer:oha-k6-tools:1'
-        ),
-      ],
+    // Use a public Docker image if provided, otherwise build from local Dockerfile
+    let dockerImageCode: lambda.DockerImageCode;
+    if (props.publicDockerImageUri) {
+      dockerImageCode = lambda.DockerImageCode.fromImageAsset(props.publicDockerImageUri);
+    } else {
+      const dockerImageAsset = new ecrAssets.DockerImageAsset(this, 'LoadTestImage', {
+        directory: path.join(__dirname, '../../lambda'),
+        file: 'docker/Dockerfile',
+      });
+      dockerImageCode = lambda.DockerImageCode.fromEcr(dockerImageAsset.repository, {
+        tagOrDigest: dockerImageAsset.imageTag,
+      });
+    }
+
+    // Create the Lambda function using the construct
+    const loadTest = new LoadTestFunctionConstruct(this, 'LoadTestFunctionConstruct', {
+      functionName: props.functionName,
+      dockerImageCode,
+      environment: props.environment,
     });
-
-    // Grant Lambda permission to read from S3 (for test profiles)
-    loadTestFunction.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ['s3:GetObject'],
-        resources: ['arn:aws:s3:::*/*'],
-      })
-    );
 
     // Output the function ARN for use in other stacks/scripts
     new cdk.CfnOutput(this, 'LoadTestFunctionArn', {
-      value: loadTestFunction.functionArn,
+      value: loadTest.lambdaFunction.functionArn,
       description: 'ARN of the Load Test Lambda function',
-      exportName: 'LoadTestFunctionArn',
+      exportName: `${cdk.Stack.of(this).stackName}-LoadTestFunctionArn`,
     });
   }
 }
