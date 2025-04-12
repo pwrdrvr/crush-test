@@ -2,6 +2,7 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { Handler } from 'aws-lambda';
 import { spawn } from 'child_process';
 import { promisify } from 'util';
+import * as fs from 'fs';
 
 interface TestPayload {
   tool: 'oha' | 'k6';
@@ -68,10 +69,10 @@ export const handler: Handler<TestPayload> = async (event) => {
   let k6JsonPath = '/tmp/k6-result.json';
   let k6JsonRequested = false;
   if (event.tool === 'k6') {
-    // Ensure --out json=/tmp/k6-result.json is present
-    k6JsonRequested = args.some(arg => arg.startsWith('--out') && arg.includes('json='));
+    // Ensure that we save the summary output to a json file
+    k6JsonRequested = args.some(arg => arg.startsWith('--summary-export'));
     if (!k6JsonRequested) {
-      args.push('--out', `json=${k6JsonPath}`);
+      args.push('--summary-export', `${k6JsonPath}`);
     }
     // If the test profile is present, ensure it's the last arg (k6 expects script last)
     if (testProfilePath) {
@@ -99,28 +100,18 @@ export const handler: Handler<TestPayload> = async (event) => {
       stdoutField = { type: 'text', value: stdout };
     }
   } else if (event.tool === 'k6') {
-    // Try to read the k6 JSON output file
-    const fs = require('fs');
-    let k6Json: any = null;
-    try {
-      if (fs.existsSync(k6JsonPath)) {
-        const k6JsonRaw = fs.readFileSync(k6JsonPath, 'utf-8');
-        k6Json = k6JsonRaw
-          .split('\n')
-          .filter(line => line.trim().length > 0)
-          .map(line => {
-            try {
-              return JSON.parse(line);
-            } catch {
-              return line;
-            }
-          });
-        stdoutField = { type: 'json', value: k6Json };
-      } else {
-        stdoutField = { type: 'text', value: stdout };
-      }
+     // With k6's --summary-export flag, the output should be JSON
+     try {
+        if (fs.existsSync(k6JsonPath)) {
+          const k6JsonRaw = fs.readFileSync(k6JsonPath, 'utf-8');
+          const parsedOutput = JSON.parse(k6JsonRaw);
+          stdoutField = { type: 'json', value: parsedOutput };
+        } else {
+          console.error('K6 JSON output file not found:', k6JsonPath);
+          stdoutField = { type: 'text', value: stdout };
+        }
     } catch (e) {
-      console.error('Failed to read or parse k6 JSON output:', e);
+      console.error('Failed to parse K6 JSON output:', e);
       stdoutField = { type: 'text', value: stdout };
     }
   } else {
