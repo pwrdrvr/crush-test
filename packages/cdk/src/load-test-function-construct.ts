@@ -1,7 +1,8 @@
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import { Duration } from 'aws-cdk-lib';
+import { Duration, RemovalPolicy } from 'aws-cdk-lib';
+import * as logs from 'aws-cdk-lib/aws-logs';
 
 export interface LoadTestFunctionConstructProps {
   /**
@@ -17,6 +18,10 @@ export interface LoadTestFunctionConstructProps {
    * Optional environment variables for the Lambda.
    */
   environment?: { [key: string]: string };
+  /**
+   * Memory size in MB (default: 2048)
+   */
+  memorySize?: number;
 }
 
 export class LoadTestFunctionConstruct extends Construct {
@@ -29,11 +34,12 @@ export class LoadTestFunctionConstruct extends Construct {
       functionName: props.functionName,
       code: props.dockerImageCode,
       timeout: Duration.minutes(15),
-      memorySize: 2048,
+      memorySize: props.memorySize ?? 2048,
       environment: {
         NODE_OPTIONS: '--enable-source-maps',
         ...props.environment,
       },
+      logRetention: logs.RetentionDays.ONE_WEEK,
     });
 
     // Grant Lambda permission to read from S3 (for test profiles)
@@ -43,5 +49,6 @@ export class LoadTestFunctionConstruct extends Construct {
         resources: ['arn:aws:s3:::*/*'],
       })
     );
+
   }
 }
