@@ -64,20 +64,63 @@ export const handler: Handler<TestPayload> = async (event) => {
     args = [...prependArgs, ...args];
   }
 
+  // If tool is k6, ensure --out json is present and handle output
+  let k6JsonPath = '/tmp/k6-result.json';
+  let k6JsonRequested = false;
+  if (event.tool === 'k6') {
+    // Ensure --out json=/tmp/k6-result.json is present
+    k6JsonRequested = args.some(arg => arg.startsWith('--out') && arg.includes('json='));
+    if (!k6JsonRequested) {
+      args.push('--out', `json=${k6JsonPath}`);
+    }
+    // If the test profile is present, ensure it's the last arg (k6 expects script last)
+    if (testProfilePath) {
+      // Remove if already present (avoid duplicate)
+      args = args.filter(arg => arg !== testProfilePath);
+      args.push(testProfilePath);
+    }
+  }
+
   console.log('Running command:', event.tool, args.join(' '));
   // console.log('Environment:', env);
 
   // Use the cleaner runProcess helper
   const { stdout, stderr, exitCode } = await runProcess(event.tool, args, env);
 
-  // With oha's -j flag, the output should be JSON
   let stdoutField: { type: string; value: any };
+
   if (event.tool === 'oha' && stdout) {
+    // With oha's -j flag, the output should be JSON
     try {
       const parsedOutput = JSON.parse(stdout);
       stdoutField = { type: 'json', value: parsedOutput };
     } catch (e) {
       console.error('Failed to parse oha JSON output:', e);
+      stdoutField = { type: 'text', value: stdout };
+    }
+  } else if (event.tool === 'k6') {
+    // Try to read the k6 JSON output file
+    const fs = require('fs');
+    let k6Json: any = null;
+    try {
+      if (fs.existsSync(k6JsonPath)) {
+        const k6JsonRaw = fs.readFileSync(k6JsonPath, 'utf-8');
+        k6Json = k6JsonRaw
+          .split('\n')
+          .filter(line => line.trim().length > 0)
+          .map(line => {
+            try {
+              return JSON.parse(line);
+            } catch {
+              return line;
+            }
+          });
+        stdoutField = { type: 'json', value: k6Json };
+      } else {
+        stdoutField = { type: 'text', value: stdout };
+      }
+    } catch (e) {
+      console.error('Failed to read or parse k6 JSON output:', e);
       stdoutField = { type: 'text', value: stdout };
     }
   } else {
