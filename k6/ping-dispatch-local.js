@@ -37,5 +37,7 @@ export const options = {
 // the number of concurrent requests is quite high
 //
 export function dispatch() {
-  http.get("http://127.0.0.1:5001/ping");
+  // Use TARGET_URL from environment, fallback to default
+  const url = __ENV.TARGET_URL || "http://127.0.0.1:5001/ping";
+  http.get(url);
 }
