@@ -20,9 +20,10 @@ RUN chmod +x /usr/local/bin/k6
 # Create app directory
 WORKDIR ${LAMBDA_TASK_ROOT}
 
+# We are bundling with esbuild so we don't need to install node_modules
 # Install production dependencies
-COPY package*.json ./
-RUN npm i
+# COPY package*.json ./
+# RUN npm i
 
 # Copy built Lambda code
 COPY dist/ ./
