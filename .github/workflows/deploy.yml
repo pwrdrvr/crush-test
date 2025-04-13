@@ -164,3 +164,121 @@ jobs:
         with:
           lambda_name: ${{ steps.lambda-name.outputs.lambda_name }}
           artifact_id: smoke-check-response-deploy-packaged
+
+  summarize-performance:
+    name: Summarize Performance Results
+    runs-on: ubuntu-latest
+    needs:
+      - deploy
+      - deploy-packaged
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Download deploy smoke check artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: smoke-check-response-deploy
+          path: smoke-check-deploy
+
+      - name: Download deploy-packaged smoke check artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: smoke-check-response-deploy-packaged
+          path: smoke-check-deploy-packaged
+
+      - name: Summarize Performance Results
+        id: perf-test
+        run: |
+          #!/usr/bin/env bash
+          set -e
+
+          # Helper to extract metrics from oha
+          extract_oha() {
+            local file="$1"
+            local total=$(jq -r '.body' "$file" | jq -r '.stdout.value.summary.total // empty')
+            local rps=$(jq -r '.body' "$file" | jq -r '.stdout.value.summary.requestsPerSec // empty')
+            local min=$(jq -r '.body' "$file" | jq -r '.stdout.value.summary.fastest // empty')
+            local p50=$(jq -r '.body' "$file" | jq -r '.stdout.value.latencyPercentiles.p50 // empty')
+            local p90=$(jq -r '.body' "$file" | jq -r '.stdout.value.latencyPercentiles.p90 // empty')
+            local p95=$(jq -r '.body' "$file" | jq -r '.stdout.value.latencyPercentiles.p95 // empty')
+            echo "$total|$rps|$min|$p50|$p90|$p95"
+          }
+
+          # Helper to extract metrics from k6
+          extract_k6() {
+            local file="$1"
+            local metrics=$(jq -r '.body' "$file" | jq -r '.summaryExportField.value.metrics // empty')
+            local total=$(echo "$metrics" | jq -r '.http_reqs.count // empty')
+            local rps=$(echo "$metrics" | jq -r '.http_reqs.rate // empty')
+            local min=$(echo "$metrics" | jq -r '.http_req_duration.min // empty')
+            local p50=$(echo "$metrics" | jq -r '.http_req_duration.med // empty')
+            local p90=$(echo "$metrics" | jq -r '.http_req_duration["p(90)"] // empty')
+            local p95=$(echo "$metrics" | jq -r '.http_req_duration["p(95)"] // empty')
+            echo "$total|$rps|$min|$p50|$p90|$p95"
+          }
+
+          # Prepare table header
+          echo "### 🚀 Performance Test Results" > perf.md
+          echo "" >> perf.md
+          echo "| Metric | Deploy Oha | Deploy K6 | Deploy Packaged Oha | Deploy Packaged K6 |" >> perf.md
+          echo "|--------|------------|-----------|---------------------|--------------------|" >> perf.md
+
+          # Extract metrics for each test
+          oha_deploy="smoke-check-deploy/response-oha.json"
+          k6_deploy="smoke-check-deploy/response-k6.json"
+          oha_packaged="smoke-check-deploy-packaged/response-oha.json"
+          k6_packaged="smoke-check-deploy-packaged/response-k6.json"
+
+          read -r oha_deploy_vals <<< "$(extract_oha "$oha_deploy")"
+          read -r k6_deploy_vals <<< "$(extract_k6 "$k6_deploy")"
+          read -r oha_packaged_vals <<< "$(extract_oha "$oha_packaged")"
+          read -r k6_packaged_vals <<< "$(extract_k6 "$k6_packaged")"
+
+          # Helper to get column value or empty
+          col() { echo "$1" | cut -d'|' -f"$2"; }
+
+          # Table rows
+          echo "| Total Requests | $(col "$oha_deploy_vals" 1) | $(col "$k6_deploy_vals" 1) | $(col "$oha_packaged_vals" 1) | $(col "$k6_packaged_vals" 1) |" >> perf.md
+          echo "| Overall RPS | $(col "$oha_deploy_vals" 2) | $(col "$k6_deploy_vals" 2) | $(col "$oha_packaged_vals" 2) | $(col "$k6_packaged_vals" 2) |" >> perf.md
+          echo "| Min Response Time (ms) | $(col "$oha_deploy_vals" 3) | $(col "$k6_deploy_vals" 3) | $(col "$oha_packaged_vals" 3) | $(col "$k6_packaged_vals" 3) |" >> perf.md
+          echo "| p50 Response Time (ms) | $(col "$oha_deploy_vals" 4) | $(col "$k6_deploy_vals" 4) | $(col "$oha_packaged_vals" 4) | $(col "$k6_packaged_vals" 4) |" >> perf.md
+          echo "| p90 Response Time (ms) | $(col "$oha_deploy_vals" 5) | $(col "$k6_deploy_vals" 5) | $(col "$oha_packaged_vals" 5) | $(col "$k6_packaged_vals" 5) |" >> perf.md
+          echo "| p95 Response Time (ms) | $(col "$oha_deploy_vals" 6) | $(col "$k6_deploy_vals" 6) | $(col "$oha_packaged_vals" 6) | $(col "$k6_packaged_vals" 6) |" >> perf.md
+
+          # Add details blocks for raw JSON
+          add_details() {
+            local file="$1"
+            local label="$2"
+            if [ -f "$file" ]; then
+              echo "" >> perf.md
+              echo "<details><summary>$label Raw JSON</summary>" >> perf.md
+              echo "" >> perf.md
+              echo '```json' >> perf.md
+              jq . "$file" >> perf.md
+              echo '```' >> perf.md
+              echo "</details>" >> perf.md
+            fi
+          }
+
+          add_details "$oha_deploy" "Deploy Oha"
+          add_details "$k6_deploy" "Deploy K6"
+          add_details "$oha_packaged" "Deploy Packaged Oha"
+          add_details "$k6_packaged" "Deploy Packaged K6"
+
+          echo "Performance summary written to perf.md"
+        shell: bash
+
+      - name: Find Performance Results Comment
+        uses: peter-evans/find-comment@v3
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '### 🚀 Performance Test Results'
+
+      - name: Post Performance Results Comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: perf.md
