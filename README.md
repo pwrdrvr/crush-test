@@ -41,3 +41,17 @@ aws lambda invoke --cli-read-timeout 120 \
   }' \
   --cli-binary-format raw-in-base64-out response.json && cat response.json
 ```
+
+## Simple Run - 110 seconds
+
+```bash
+aws lambda invoke --cli-read-timeout 120 \
+  --function-name crush-test-lambda \
+  --payload '{
+    "tool":"k6",
+    "args":["run"],
+    "env":{"TARGET_URL":"https://lambdadispatch-pr-274.ghpublic.pwrdrvr.com/ping"},
+    "testProfile":{"base64Content":"aW1wb3J0IGh0dHAgZnJvbSAiazYvaHR0cCI7CgpleHBvcnQgY29uc3Qgb3B0aW9ucyA9IHsKICBkaXNjYXJkUmVzcG9uc2VCb2RpZXM6IHRydWUsCiAgc2NlbmFyaW9zOiB7CiAgICBkaXNwYXRjaDogewogICAgICBleGVjdXRvcjogInJhbXBpbmctYXJyaXZhbC1yYXRlIiwKICAgICAgcHJlQWxsb2NhdGVkVlVzOiAxMCwKICAgICAgbWF4VlVzOiAxMDAwLAogICAgICBzdGFydFJhdGU6IDIwLAogICAgICB0aW1lVW5pdDogIjFzIiwKICAgICAgc3RhZ2VzOiBbCiAgICAgICAgeyB0YXJnZXQ6IDEwLCBkdXJhdGlvbjogIjBzIiB9LAogICAgICAgIHsgdGFyZ2V0OiAxMDAsIGR1cmF0aW9uOiAiMXMiIH0sCiAgICAgICAgeyB0YXJnZXQ6IDUwMCwgZHVyYXRpb246ICIxcyIgfSwKICAgICAgICB7IHRhcmdldDogMTAwMCwgZHVyYXRpb246ICIxMHMiIH0sCiAgICAgICAgeyB0YXJnZXQ6IDIwMDAsIGR1cmF0aW9uOiAiMzBzIiB9LAogICAgICAgIHsgdGFyZ2V0OiAxMDAwLCBkdXJhdGlvbjogIjMwcyIgfSwKICAgICAgICB7IHRhcmdldDogMjAwMCwgZHVyYXRpb246ICIzMHMiIH0sCiAgICAgICAgeyB0YXJnZXQ6IDAsIGR1cmF0aW9uOiAiMCIgfSwKICAgICAgXSwKICAgICAgZXhlYzogImRpc3BhdGNoIiwKICAgIH0sCiAgfSwKfTsKCi8vIEhpdCBhbiBhcmJpcnRhcnkgVVJMIHdpdGggYSBHRVQgcmVxdWVzdCBhbmQgZGlzY2FyZCB0aGUgYm9keQpleHBvcnQgZnVuY3Rpb24gZGlzcGF0Y2goKSB7CiAgLy8gVXNlIFRBUkdFVF9VUkwgZnJvbSBlbnZpcm9ubWVudCwgZmFsbGJhY2sgdG8gZGVmYXVsdAogIGNvbnN0IHVybCA9IF9fRU5WLlRBUkdFVF9VUkwgfHwgImh0dHA6Ly8xMjcuMC4wLjE6NTAwMS9waW5nIjsKICBodHRwLmdldCh1cmwpOwp9Cg=="}
+  }' \
+  --cli-binary-format raw-in-base64-out response.json && cat response.json
+```
