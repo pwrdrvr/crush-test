@@ -5,7 +5,7 @@ function isRateKey(key) {
   return /rate|rps|requestspersec|successrate/i.test(key);
 }
 function isTimeKey(key) {
-  return /time|duration|latency|fastest|slowest|average|avg|min|max|med|p\d{2,3}/i.test(key);
+  return /time|duration|latency|fastest|slowest|average|avg|min|max|med|p\d{2,3}|p\(\d{2,3}\)/i.test(key);
 }
 function roundValue(key, value) {
   if (typeof value !== 'number') return value;
