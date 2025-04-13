@@ -8,6 +8,7 @@ interface TestPayload {
   tool: 'oha' | 'k6';
   args: string[];
   env?: Record<string, string>;
+  labels?: Record<string, string>;
   testProfile?: {
     s3Location?: {
       bucket: string;
@@ -122,14 +123,20 @@ export const handler: Handler<TestPayload> = async (event) => {
 
   console.log('Returning result');
 
+  // Prepare a copy of the input event, omitting testProfile.base64Content if present
+  const requestEcho: any = { ...event };
+  if (requestEcho.testProfile && requestEcho.testProfile.base64Content) {
+    requestEcho.testProfile = { ...requestEcho.testProfile };
+    delete requestEcho.testProfile.base64Content;
+  }
+
   let responseBody: any = {
     stdout: stdoutField,
+    ...(event.tool === 'k6' && typeof summaryExportField !== 'undefined' ? { summaryExportField } : {}),
     stderr,
-    exitCode
+    exitCode,
+    request: requestEcho
   };
-  if (event.tool === 'k6' && typeof summaryExportField !== 'undefined') {
-    responseBody.summaryExport = summaryExportField;
-  }
 
   return {
     statusCode: exitCode === 0 ? 200 : 500,
