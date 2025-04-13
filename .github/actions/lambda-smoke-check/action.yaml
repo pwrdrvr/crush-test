@@ -10,19 +10,47 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Invoke Lambda
+    - name: Invoke Lambda with oha
       shell: bash
       run: |
-        aws lambda invoke --cli-read-timeout 120 --function-name "${{ inputs.lambda_name }}" --payload '{"tool":"oha","labels":{"test":"oha","type":"ping-c20-z10s"},"args":["--no-tui","-j","-c","20","-z","10s","https://lambdadispatch.ghpublic.pwrdrvr.com/ping"]}' --cli-binary-format raw-in-base64-out response.json
-        cat response.json | jq .
-        STATUS_CODE=$(cat response.json | jq -r '.statusCode')
+        aws lambda invoke --cli-read-timeout 120 \
+          --function-name "${{ inputs.lambda_name }}" \
+          --payload '{"tool":"oha","labels":{"test":"oha","type":"ping-c20-z10s"},"args":["--no-tui","-j","-c","20","-z","10s","https://lambdadispatch.ghpublic.pwrdrvr.com/ping"]}' \
+          --cli-binary-format raw-in-base64-out response-oha.json
+        cat response-oha.json | jq .
+        STATUS_CODE=$(cat response-oha.json | jq -r '.statusCode')
         if [ "$STATUS_CODE" != "200" ]; then
           echo "Smoke check failed: statusCode=$STATUS_CODE"
           exit 1
         fi
 
-    - name: Upload smoke check response.json
+    - name: Invoke Lambda with k6
+      shell: bash
+      run: |
+        aws lambda invoke --cli-read-timeout 120 \
+          --function-name crush-test-lambda \
+          --payload '{
+            "tool":"k6",
+            "labels": {
+              "test": "k6",
+              "type": "ping-3-seconds"
+            },
+            "args":["run"],
+            "env":{"TARGET_URL":"https://lambdadispatch.ghpublic.pwrdrvr.com/ping"},
+            "testProfile":{"base64Content":"aW1wb3J0IGh0dHAgZnJvbSAiazYvaHR0cCI7CgpleHBvcnQgY29uc3Qgb3B0aW9ucyA9IHsKICBkaXNjYXJkUmVzcG9uc2VCb2RpZXM6IHRydWUsCiAgc2NlbmFyaW9zOiB7CiAgICBkaXNwYXRjaDogewogICAgICBleGVjdXRvcjogInJhbXBpbmctYXJyaXZhbC1yYXRlIiwKICAgICAgcHJlQWxsb2NhdGVkVlVzOiAxMCwKICAgICAgbWF4VlVzOiAxMDAwLAogICAgICBzdGFydFJhdGU6IDIwLAogICAgICB0aW1lVW5pdDogIjFzIiwKICAgICAgc3RhZ2VzOiBbCiAgICAgICAgLy8geyB0YXJnZXQ6IDEsIGR1cmF0aW9uOiAiMTBzIiB9LAogICAgICAgIHsgdGFyZ2V0OiAxMCwgZHVyYXRpb246ICIwcyIgfSwKICAgICAgICB7IHRhcmdldDogMTAwLCBkdXJhdGlvbjogIjFzIiB9LAogICAgICAgIHsgdGFyZ2V0OiAxMDAwLCBkdXJhdGlvbjogIjFzIiB9LAogICAgICAgIHsgdGFyZ2V0OiAxMDAwLCBkdXJhdGlvbjogIjFzIiB9LAogICAgICAgIC8vIHsgdGFyZ2V0OiAxMDAwMCwgZHVyYXRpb246ICIxMHMiIH0sCiAgICAgICAgLy8geyB0YXJnZXQ6IDEwMDAwLCBkdXJhdGlvbjogIjVtIiB9LAogICAgICAgIC8vIHsgdGFyZ2V0OiAyMDAwLCBkdXJhdGlvbjogIjYwcyIgfSwKICAgICAgICAvLyB7IHRhcmdldDogMjAwMCwgZHVyYXRpb246ICI1bSIgfSwKICAgICAgICAvLyB7IHRhcmdldDogMzAwMCwgZHVyYXRpb246ICI2MHMiIH0sCiAgICAgICAgLy8geyB0YXJnZXQ6IDMwMDAsIGR1cmF0aW9uOiAiNW0iIH0sCiAgICAgICAgeyB0YXJnZXQ6IDAsIGR1cmF0aW9uOiAiMCIgfSwKICAgICAgXSwKICAgICAgZXhlYzogImRpc3BhdGNoIiwKICAgIH0sCiAgfSwKfTsKCi8vCi8vIFJlYWRzIGEgcmFuZG9tIH4xLjUgS0IgcmVjb3JkIG91dCBvZiBEeW5hbW9EQgovLyBUaGlzIGlzIHZlcnkgZmFzdCBhbmQgYSB2ZXJ5IHNtYWxsIHJlc3BvbnNlIHNpemUKLy8gVGhpcyBpcyBlc3NlbnRpYWxseSB0aGUgd29yc3QgY2FzZSBzY2VuYXJpbyBmb3IgbGFtYmRhIGRpc3BhdGNoCi8vIFRoaXMgYWxzbyBjb250YWlucyBhIDUwIG1zIHNsZWVwIGluIHRoZSBgL3JlYWRgIGhhbmRsZXIgdG8gc2ltdWxhdGUgY2FsbGluZyBhbiB1cHN0cmVhbSB0aGF0IHRha2VzIGxvbmdlcgovLyBUaGlzIG1lYW4gdGhhdCB0aGUgQ1BVIG9uIExhbWJkYSBEaXNwYXRjaCB3aWxsIGJlIHVuZGVydXRpbGl6ZWQgdW5sZXNzCi8vIHRoZSBudW1iZXIgb2YgY29uY3VycmVudCByZXF1ZXN0cyBpcyBxdWl0ZSBoaWdoCi8vCmV4cG9ydCBmdW5jdGlvbiBkaXNwYXRjaCgpIHsKICAvLyBVc2UgVEFSR0VUX1VSTCBmcm9tIGVudmlyb25tZW50LCBmYWxsYmFjayB0byBkZWZhdWx0CiAgY29uc3QgdXJsID0gX19FTlYuVEFSR0VUX1VSTCB8fCAiaHR0cDovLzEyNy4wLjAuMTo1MDAxL3BpbmciOwogIGh0dHAuZ2V0KHVybCk7Cn0K"}
+          }' \
+          --cli-binary-format raw-in-base64-out response-k6.json
+        cat response-k6.json | jq .
+        STATUS_CODE=$(cat response-k6.json | jq -r '.statusCode')
+        if [ "$STATUS_CODE" != "200" ]; then
+          echo "Smoke check failed: statusCode=$STATUS_CODE"
+          exit 1
+        fi
+
+    - name: Upload smoke check results
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact_id }}
-        path: ${{ 'response.json' }}
+        path: |
+          response-oha.json
+          response-k6.json
