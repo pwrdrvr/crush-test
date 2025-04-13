@@ -1,3 +1,4 @@
+import { existsSync } from 'fs';
 import * as path from 'path';
 import { Duration } from 'aws-cdk-lib';
 import * as ecrAssets from 'aws-cdk-lib/aws-ecr-assets';
@@ -55,13 +56,25 @@ export class CrushTest extends Construct {
     if (props.dockerImageCode) {
       dockerImageCode = props.dockerImageCode;
     } else {
-      const dockerImageAsset = new ecrAssets.DockerImageAsset(this, 'LoadTestImage', {
-        directory: path.join(__dirname, '../../lambda'),
-        file: 'docker/Dockerfile',
-      });
-      dockerImageCode = lambda.DockerImageCode.fromEcr(dockerImageAsset.repository, {
-        tagOrDigest: dockerImageAsset.imageTag,
-      });
+      if (existsSync(path.join(__dirname, '../.projenrc.ts'))) {
+        // Local source build / deploy
+        const dockerImageAsset = new ecrAssets.DockerImageAsset(this, 'LoadTestImage', {
+          directory: path.join(__dirname, '../../lambda'),
+          file: 'docker/Dockerfile',
+        });
+        dockerImageCode = lambda.DockerImageCode.fromEcr(dockerImageAsset.repository, {
+          tagOrDigest: dockerImageAsset.imageTag,
+        });
+      } else {
+        // Distributed NPM package with bundled Dockerfile and Lambda handler
+        const dockerImageAsset = new ecrAssets.DockerImageAsset(this, 'LoadTestImage', {
+          directory: path.join(__dirname, './lambda'),
+          file: 'docker/Dockerfile',
+        });
+        dockerImageCode = lambda.DockerImageCode.fromEcr(dockerImageAsset.repository, {
+          tagOrDigest: dockerImageAsset.imageTag,
+        });
+      }
     }
 
     this.lambdaFunction = new lambda.DockerImageFunction(this, 'LoadTestFunction', {

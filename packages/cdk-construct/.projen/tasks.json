@@ -89,6 +89,18 @@
       "steps": [
         {
           "exec": "jsii --silence-warnings=reserved-word"
+        },
+        {
+          "exec": "rm -rf ./lib/lambda"
+        },
+        {
+          "exec": "mkdir -p ./lib/lambda"
+        },
+        {
+          "exec": "cp -R ../lambda/dist ./lib/lambda/"
+        },
+        {
+          "exec": "cp -R ../lambda/docker ./lib/lambda/"
         }
       ]
     },

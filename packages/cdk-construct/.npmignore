@@ -22,6 +22,7 @@ dist
 tsconfig.tsbuildinfo
 /.eslintrc.json
 !.jsii
+!/lib/lambda/dist/*
 /.gitattributes
 /.projenrc.ts
 /projenrc
