@@ -25,12 +25,27 @@ jobs:
       - uses: ./.github/actions/configure-nodejs
       - name: Build
         run: npm run build
+      - name: Cache cdk-construct build outputs
+        id: cdk_construct_cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/cdk-construct/coverage
+            packages/cdk-construct/lib
+            packages/cdk-construct/dist
+            packages/cdk-construct/test-reports
+            packages/cdk-construct/.jsii
+            packages/cdk-construct/tsconfig.json
+          key: cdk-construct-${{ hashFiles('packages/lambda/docker/**', 'packages/lambda/src/**', 'packages/lambda/tsconfig.json', 'packages/lambda/package.json', 'packages/cdk-construct/src/**', 'packages/cdk-construct/package.json', 'packages/cdk-construct/tsconfig.json', 'packages/cdk-construct/.projenrc.ts', 'package-lock.json', 'package.json') }}
+
       - name: Package the Construct
+        if: steps.cdk_construct_cache.outputs.cache-hit != 'true'
         run: |
           npm run compile -w packages/cdk-construct
           npm run post-compile -w packages/cdk-construct
           npm run test -w packages/cdk-construct
           npm run package -w packages/cdk-construct
+
       - name: Upload cdk-construct-package artifact
         uses: actions/upload-artifact@v4
         with:
