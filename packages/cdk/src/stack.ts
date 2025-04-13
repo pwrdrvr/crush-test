@@ -1,8 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import * as ecrAssets from 'aws-cdk-lib/aws-ecr-assets';
 import { Construct } from 'constructs';
-import * as path from 'path';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { CrushTest } from '../../cdk-construct/src';
 
 export interface CrushTestStackProps extends cdk.StackProps {
@@ -18,34 +15,15 @@ export interface CrushTestStackProps extends cdk.StackProps {
    * Optional environment variables for the Lambda.
    */
   readonly environment?: { [key: string]: string };
-  /**
-   * Optional: Use a public Docker image URI instead of building locally.
-   */
-  readonly publicDockerImageUri?: string;
 }
 
 export class CrushTestStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: CrushTestStackProps = {}) {
     super(scope, props.stackName ?? id, props);
 
-    // Use a public Docker image if provided, otherwise build from local Dockerfile
-    let dockerImageCode: lambda.DockerImageCode;
-    if (props.publicDockerImageUri) {
-      dockerImageCode = lambda.DockerImageCode.fromImageAsset(props.publicDockerImageUri);
-    } else {
-      const dockerImageAsset = new ecrAssets.DockerImageAsset(this, 'LoadTestImage', {
-        directory: path.join(__dirname, '../../lambda'),
-        file: 'docker/Dockerfile',
-      });
-      dockerImageCode = lambda.DockerImageCode.fromEcr(dockerImageAsset.repository, {
-        tagOrDigest: dockerImageAsset.imageTag,
-      });
-    }
-
     // 2 GB Lambda (default, no suffix)
     const loadTest2gb = new CrushTest(this, 'LoadTestFunction2GB', {
       functionName: props.functionName,
-      dockerImageCode,
       environment: props.environment,
       memorySize: 2048,
     });
@@ -53,7 +31,6 @@ export class CrushTestStack extends cdk.Stack {
     // 4 GB Lambda (-4gb suffix)
     const loadTest4gb = new CrushTest(this, 'LoadTestFunction4GB', {
       functionName: props.functionName ? `${props.functionName}-4gb` : undefined,
-      dockerImageCode,
       environment: props.environment,
       memorySize: 4096,
     });
@@ -61,7 +38,6 @@ export class CrushTestStack extends cdk.Stack {
     // 8 GB Lambda (-8gb suffix)
     const loadTest8gb = new CrushTest(this, 'LoadTestFunction8GB', {
       functionName: props.functionName ? `${props.functionName}-8gb` : undefined,
-      dockerImageCode,
       environment: props.environment,
       memorySize: 8192,
     });
