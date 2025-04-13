@@ -1,8 +1,11 @@
-import { Construct } from 'constructs';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as iam from 'aws-cdk-lib/aws-iam';
+import * as path from 'path';
 import { Duration } from 'aws-cdk-lib';
+import * as ecrAssets from 'aws-cdk-lib/aws-ecr-assets';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import { Construct } from 'constructs';
+
 
 /**
  * Properties for configuring the {@link CrushTest} construct.
@@ -12,21 +15,21 @@ export interface CrushTestProps {
    * The name of the Lambda function.
    * If not provided, a default will be used.
    */
-  functionName?: string;
+  readonly functionName?: string;
   /**
    * The Docker image code to use for the Lambda.
    * This should be a DockerImageCode instance, typically from an ECR asset or image URI.
    */
-  dockerImageCode: lambda.DockerImageCode;
+  readonly dockerImageCode?: lambda.DockerImageCode;
   /**
    * Optional environment variables for the Lambda.
    */
-  environment?: { [key: string]: string };
+  readonly environment?: { [key: string]: string };
   /**
    * Memory size in MB for the Lambda function.
    * @default 2048
    */
-  memorySize?: number;
+  readonly memorySize?: number;
 }
 
 /**
@@ -48,9 +51,22 @@ export class CrushTest extends Construct {
   constructor(scope: Construct, id: string, props: CrushTestProps) {
     super(scope, id);
 
+    let dockerImageCode: lambda.DockerImageCode;
+    if (props.dockerImageCode) {
+      dockerImageCode = props.dockerImageCode;
+    } else {
+      const dockerImageAsset = new ecrAssets.DockerImageAsset(this, 'LoadTestImage', {
+        directory: path.join(__dirname, '../../lambda'),
+        file: 'docker/Dockerfile',
+      });
+      dockerImageCode = lambda.DockerImageCode.fromEcr(dockerImageAsset.repository, {
+        tagOrDigest: dockerImageAsset.imageTag,
+      });
+    }
+
     this.lambdaFunction = new lambda.DockerImageFunction(this, 'LoadTestFunction', {
       functionName: props.functionName,
-      code: props.dockerImageCode,
+      code: dockerImageCode,
       timeout: Duration.minutes(15),
       memorySize: props.memorySize ?? 2048,
       environment: {
@@ -65,7 +81,7 @@ export class CrushTest extends Construct {
       new iam.PolicyStatement({
         actions: ['s3:GetObject'],
         resources: ['arn:aws:s3:::*/*'],
-      })
+      }),
     );
 
   }

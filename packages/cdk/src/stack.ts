@@ -9,19 +9,19 @@ export interface CrushTestStackProps extends cdk.StackProps {
   /**
    * The name of the Lambda function. If not provided, a default will be used.
    */
-  functionName?: string;
+  readonly functionName?: string;
   /**
    * The name of the stack. If not provided, a default will be used.
    */
-  stackName?: string;
+  readonly stackName?: string;
   /**
    * Optional environment variables for the Lambda.
    */
-  environment?: { [key: string]: string };
+  readonly environment?: { [key: string]: string };
   /**
    * Optional: Use a public Docker image URI instead of building locally.
    */
-  publicDockerImageUri?: string;
+  readonly publicDockerImageUri?: string;
 }
 
 export class CrushTestStack extends cdk.Stack {
