@@ -171,7 +171,9 @@ jobs:
     needs:
       - deploy
       - deploy-packaged
-    if: github.event_name == 'pull_request'
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout CDK only (sparse)
         uses: actions/checkout@v4
@@ -180,6 +182,11 @@ jobs:
             scripts
             README.md
           sparse-checkout-cone-mode: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
       - name: Download deploy smoke check artifact
         uses: actions/download-artifact@v4
@@ -213,9 +220,20 @@ jobs:
             --output perf.md
         shell: bash
 
+      - name: Update README with perf table
+        if: github.ref == 'refs/heads/main'
+        run: |
+          node scripts/update-readme-perf-table.js perf.md README.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "chore: update perf table in README.md [skip ci]" || echo "No changes to commit"
+          git push
+
       - name: Find Performance Results Comment
         uses: peter-evans/find-comment@v3
         id: find-comment
+        if: github.event_name == 'pull_request'
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
@@ -223,6 +241,7 @@ jobs:
 
       - name: Post Performance Results Comment
         uses: peter-evans/create-or-update-comment@v4
+        if: github.event_name == 'pull_request'
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace

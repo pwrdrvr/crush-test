@@ -67,3 +67,9 @@ aws lambda invoke --cli-read-timeout 120 \
   }' \
   --cli-binary-format raw-in-base64-out response.json && cat response.json
 ```
+
+
+# Latest Smoke Test Results
+
+<!-- perf-table:start -->
+<!-- perf-table:end -->
