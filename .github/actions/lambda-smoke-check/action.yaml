@@ -1,0 +1,28 @@
+name: "Lambda Smoke Check"
+description: "Invoke a Lambda function, check statusCode, and upload response as artifact"
+inputs:
+  lambda_name:
+    description: "The name of the Lambda function to invoke"
+    required: true
+  artifact_id:
+    description: "The artifact name/id to use for the uploaded response"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Invoke Lambda
+      shell: bash
+      run: |
+        aws lambda invoke --cli-read-timeout 120 --function-name "${{ inputs.lambda_name }}" --payload '{"tool":"oha","labels":{"test":"oha","type":"ping-c20-z10s"},"args":["--no-tui","-j","-c","20","-z","10s","https://lambdadispatch.ghpublic.pwrdrvr.com/ping"]}' --cli-binary-format raw-in-base64-out response.json
+        cat response.json | jq .
+        STATUS_CODE=$(cat response.json | jq -r '.statusCode')
+        if [ "$STATUS_CODE" != "200" ]; then
+          echo "Smoke check failed: statusCode=$STATUS_CODE"
+          exit 1
+        fi
+
+    - name: Upload smoke check response.json
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact_id }}
+        path: ${{ 'response.json' }}
