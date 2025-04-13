@@ -6,6 +6,10 @@
     },
     {
       "path": "packages/lambda/"
-    },
+    }
+  ],
+  "exclude": [
+    "**/cdk.out/**",
+    "**/node_modules/**"
   ]
 }
