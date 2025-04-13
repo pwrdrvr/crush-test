@@ -2,7 +2,6 @@ import { existsSync } from 'fs';
 import * as path from 'path';
 import { Duration } from 'aws-cdk-lib';
 import * as ecrAssets from 'aws-cdk-lib/aws-ecr-assets';
-import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
@@ -20,6 +19,8 @@ export interface CrushTestProps {
   /**
    * The Docker image code to use for the Lambda.
    * This should be a DockerImageCode instance, typically from an ECR asset or image URI.
+   * 
+   * @default A Docker image built from the local Dockerfile and bundled JS in the `lambda` directory.
    */
   readonly dockerImageCode?: lambda.DockerImageCode;
   /**
@@ -88,14 +89,5 @@ export class CrushTest extends Construct {
       },
       logRetention: logs.RetentionDays.ONE_WEEK,
     });
-
-    // Grant Lambda permission to read from S3 (for test profiles)
-    this.lambdaFunction.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ['s3:GetObject'],
-        resources: ['arn:aws:s3:::*/*'],
-      }),
-    );
-
   }
 }
