@@ -82,22 +82,11 @@ jobs:
             echo "lambda_name=crush-test-lambda-pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Smoke Check
-        run: |
-          aws lambda invoke --cli-read-timeout 120 --function-name ${{ steps.lambda-name.outputs.lambda_name }} --payload '{"tool":"oha","labels":{"test":"oha","type":"ping-c20-z10s"},"args":["--no-tui","-j","-c","20","-z","10s","https://lambdadispatch.ghpublic.pwrdrvr.com/ping"]}' --cli-binary-format raw-in-base64-out response.json
-          cat response.json
-          cat response.json | jq .
-          STATUS_CODE=$(cat response.json | jq -r '.statusCode')
-          if [ "$STATUS_CODE" != "200" ]; then
-            echo "Smoke check failed: statusCode=$STATUS_CODE"
-            exit 1
-          fi
-
-      - name: Upload smoke check response.json
-        uses: actions/upload-artifact@v4
+      - name: Lambda Smoke Check
+        uses: ./.github/actions/lambda-smoke-check
         with:
-          name: smoke-check-response
-          path: response.json
+          lambda_name: ${{ steps.lambda-name.outputs.lambda_name }}
+          artifact_id: smoke-check-response-deploy
 
   deploy-packaged:
     name: Deploy Packaged
@@ -115,8 +104,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           sparse-checkout: |
+            .github
             cdk-consumer-test
           sparse-checkout-cone-mode: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
       - name: Download cdk-construct-package artifact
         uses: actions/download-artifact@v4
@@ -164,20 +159,8 @@ jobs:
             echo "lambda_name=crush-test-construct-test-lambda-pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Smoke Check
-        working-directory: cdk-consumer-test
-        run: |
-          aws lambda invoke --cli-read-timeout 120 --function-name ${{ steps.lambda-name.outputs.lambda_name }} --payload '{"tool":"oha","labels":{"test":"oha","type":"ping-c20-z10s"},"args":["--no-tui","-j","-c","20","-z","10s","https://lambdadispatch.ghpublic.pwrdrvr.com/ping"]}' --cli-binary-format raw-in-base64-out response.json
-          cat response.json
-          cat response.json | jq .
-          STATUS_CODE=$(cat response.json | jq -r '.statusCode')
-          if [ "$STATUS_CODE" != "200" ]; then
-            echo "Smoke check failed: statusCode=$STATUS_CODE"
-            exit 1
-          fi
-
-      - name: Upload smoke check response.json
-        uses: actions/upload-artifact@v4
+      - name: Lambda Smoke Check
+        uses: ./.github/actions/lambda-smoke-check
         with:
-          name: smoke-check-response
-          path: response.json
+          lambda_name: ${{ steps.lambda-name.outputs.lambda_name }}
+          artifact_id: smoke-check-response-deploy-packaged
