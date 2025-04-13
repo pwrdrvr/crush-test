@@ -3,7 +3,7 @@ import * as ecrAssets from 'aws-cdk-lib/aws-ecr-assets';
 import { Construct } from 'constructs';
 import * as path from 'path';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import { CrushTest } from './construct';
+import { CrushTest } from '../../cdk-construct/src';
 
 export interface CrushTestStackProps extends cdk.StackProps {
   /**
