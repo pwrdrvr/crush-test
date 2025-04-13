@@ -4,7 +4,9 @@
 
 ### CrushTest <a name="CrushTest" id="@pwrdrvr/crush-test-cdk.CrushTest"></a>
 
-A reusable CDK construct that creates a Lambda function from a Docker image, with S3 read access and configurable memory and environment.
+Deploys Crush Test as a Lambda function.
+
+Enables running `oha` or `k6` load tests from AWS.
 
 #### Initializers <a name="Initializers" id="@pwrdrvr/crush-test-cdk.CrushTest.Initializer"></a>
 
@@ -154,6 +156,7 @@ public readonly dockerImageCode: DockerImageCode;
 ```
 
 - *Type:* aws-cdk-lib.aws_lambda.DockerImageCode
+- *Default:* A Docker image built from the local Dockerfile and bundled JS in the `lambda` directory.
 
 The Docker image code to use for the Lambda.
 

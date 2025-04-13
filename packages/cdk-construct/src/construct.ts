@@ -35,8 +35,8 @@ export interface CrushTestProps {
 }
 
 /**
- * A reusable CDK construct that creates a Lambda function from a Docker image,
- * with S3 read access and configurable memory and environment.
+ * Deploys Crush Test as a Lambda function.
+ * Enables running `oha` or `k6` load tests from AWS.
  */
 export class CrushTest extends Construct {
   /**
