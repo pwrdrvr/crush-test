@@ -3,9 +3,9 @@ import * as ecrAssets from 'aws-cdk-lib/aws-ecr-assets';
 import { Construct } from 'constructs';
 import * as path from 'path';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import { LoadTestFunctionConstruct } from './load-test-function-construct';
+import { CrushTest } from './load-test-function-construct';
 
-export interface LoadTestStackProps extends cdk.StackProps {
+export interface CrushTestStackProps extends cdk.StackProps {
   /**
    * The name of the Lambda function. If not provided, a default will be used.
    */
@@ -24,8 +24,8 @@ export interface LoadTestStackProps extends cdk.StackProps {
   publicDockerImageUri?: string;
 }
 
-export class LoadTestStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: LoadTestStackProps = {}) {
+export class CrushTestStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: CrushTestStackProps = {}) {
     super(scope, props.stackName ?? id, props);
 
     // Use a public Docker image if provided, otherwise build from local Dockerfile
@@ -43,7 +43,7 @@ export class LoadTestStack extends cdk.Stack {
     }
 
     // 2 GB Lambda (default, no suffix)
-    const loadTest2gb = new LoadTestFunctionConstruct(this, 'LoadTestFunction2GB', {
+    const loadTest2gb = new CrushTest(this, 'LoadTestFunction2GB', {
       functionName: props.functionName,
       dockerImageCode,
       environment: props.environment,
@@ -51,7 +51,7 @@ export class LoadTestStack extends cdk.Stack {
     });
 
     // 4 GB Lambda (-4gb suffix)
-    const loadTest4gb = new LoadTestFunctionConstruct(this, 'LoadTestFunction4GB', {
+    const loadTest4gb = new CrushTest(this, 'LoadTestFunction4GB', {
       functionName: props.functionName ? `${props.functionName}-4gb` : undefined,
       dockerImageCode,
       environment: props.environment,
@@ -59,7 +59,7 @@ export class LoadTestStack extends cdk.Stack {
     });
 
     // 8 GB Lambda (-8gb suffix)
-    const loadTest8gb = new LoadTestFunctionConstruct(this, 'LoadTestFunction8GB', {
+    const loadTest8gb = new CrushTest(this, 'LoadTestFunction8GB', {
       functionName: props.functionName ? `${props.functionName}-8gb` : undefined,
       dockerImageCode,
       environment: props.environment,
@@ -70,17 +70,17 @@ export class LoadTestStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'LoadTestFunction2GBArn', {
       value: loadTest2gb.lambdaFunction.functionArn,
       description: 'ARN of the 2GB Load Test Lambda function',
-      exportName: `${cdk.Stack.of(this).stackName}-LoadTestFunction2GBArn`,
+      exportName: `${cdk.Stack.of(this).stackName}-Function2GBArn`,
     });
     new cdk.CfnOutput(this, 'LoadTestFunction4GBArn', {
       value: loadTest4gb.lambdaFunction.functionArn,
       description: 'ARN of the 4GB Load Test Lambda function',
-      exportName: `${cdk.Stack.of(this).stackName}-LoadTestFunction4GBArn`,
+      exportName: `${cdk.Stack.of(this).stackName}-Function4GBArn`,
     });
     new cdk.CfnOutput(this, 'LoadTestFunction8GBArn', {
       value: loadTest8gb.lambdaFunction.functionArn,
       description: 'ARN of the 8GB Load Test Lambda function',
-      exportName: `${cdk.Stack.of(this).stackName}-LoadTestFunction8GBArn`,
+      exportName: `${cdk.Stack.of(this).stackName}-Function8GBArn`,
     });
   }
 }

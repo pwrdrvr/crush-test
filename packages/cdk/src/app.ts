@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { LoadTestStack } from './stack';
+import { CrushTestStack } from './stack';
 
 const app = new cdk.App();
 
@@ -7,7 +7,7 @@ const app = new cdk.App();
 const mainStackName = 'crush-test';
 const mainFunctionName = 'crush-test-lambda';
 
-new LoadTestStack(app, mainStackName, {
+new CrushTestStack(app, mainStackName, {
   stackName: mainStackName,
   functionName: mainFunctionName,
   env: {
@@ -21,7 +21,7 @@ const prNumber = process.env.PR_NUMBER;
 if (prNumber) {
   const prStackName = `crush-test-pr-${prNumber}`;
   const prFunctionName = `crush-test-lambda-pr-${prNumber}`;
-  new LoadTestStack(app, prStackName, {
+  new CrushTestStack(app, prStackName, {
     stackName: prStackName,
     functionName: prFunctionName,
     env: {

@@ -4,7 +4,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import { Duration, RemovalPolicy } from 'aws-cdk-lib';
 import * as logs from 'aws-cdk-lib/aws-logs';
 
-export interface LoadTestFunctionConstructProps {
+export interface CrushTestProps {
   /**
    * The name of the Lambda function. If not provided, a default will be used.
    */
@@ -24,10 +24,10 @@ export interface LoadTestFunctionConstructProps {
   memorySize?: number;
 }
 
-export class LoadTestFunctionConstruct extends Construct {
+export class CrushTest extends Construct {
   public readonly lambdaFunction: lambda.DockerImageFunction;
 
-  constructor(scope: Construct, id: string, props: LoadTestFunctionConstructProps) {
+  constructor(scope: Construct, id: string, props: CrushTestProps) {
     super(scope, id);
 
     this.lambdaFunction = new lambda.DockerImageFunction(this, 'LoadTestFunction', {
