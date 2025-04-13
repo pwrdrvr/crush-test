@@ -1,17 +1,21 @@
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import { Duration, RemovalPolicy } from 'aws-cdk-lib';
+import { Duration } from 'aws-cdk-lib';
 import * as logs from 'aws-cdk-lib/aws-logs';
 
+/**
+ * Properties for configuring the {@link CrushTest} construct.
+ */
 export interface CrushTestProps {
   /**
-   * The name of the Lambda function. If not provided, a default will be used.
+   * The name of the Lambda function.
+   * If not provided, a default will be used.
    */
   functionName?: string;
   /**
-   * The Docker image URI or ECR asset to use for the Lambda.
-   * If not provided, the stack should supply one.
+   * The Docker image code to use for the Lambda.
+   * This should be a DockerImageCode instance, typically from an ECR asset or image URI.
    */
   dockerImageCode: lambda.DockerImageCode;
   /**
@@ -19,14 +23,28 @@ export interface CrushTestProps {
    */
   environment?: { [key: string]: string };
   /**
-   * Memory size in MB (default: 2048)
+   * Memory size in MB for the Lambda function.
+   * @default 2048
    */
   memorySize?: number;
 }
 
+/**
+ * A reusable CDK construct that creates a Lambda function from a Docker image,
+ * with S3 read access and configurable memory and environment.
+ */
 export class CrushTest extends Construct {
+  /**
+   * The underlying DockerImageFunction Lambda resource.
+   */
   public readonly lambdaFunction: lambda.DockerImageFunction;
 
+  /**
+   * Creates a new {@link CrushTest} construct.
+   * @param scope The parent construct.
+   * @param id The construct ID.
+   * @param props Configuration properties.
+   */
   constructor(scope: Construct, id: string, props: CrushTestProps) {
     super(scope, id);
 
