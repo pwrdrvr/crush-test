@@ -1,0 +1,38 @@
+name: Cleanup Merged PR
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stack_name:
+          - crush-test-pr-${{ github.event.pull_request.number }}
+          - crush-test-construct-test-pr-${{ github.event.pull_request.number }}
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-session-name: lambda-dispatch-ghpublic-build
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/builder-writeRole
+          aws-region: us-east-2
+
+      - name: Delete Stack
+        env:
+          STACK_NAME: ${{ matrix.stack_name }}
+          AWS_REGION: us-east-2
+        run: |
+          echo "Deleting stack: ${STACK_NAME}"
+          aws cloudformation delete-stack --stack-name "${STACK_NAME}"
+          aws cloudformation wait stack-delete-complete --stack-name "${STACK_NAME}"
