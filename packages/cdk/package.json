@@ -11,8 +11,9 @@
     "synth": "cdk synth"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "PwrDrvr LLC",
+  "license": "MIT",
+  "private": true,
   "devDependencies": {
     "@types/node": "^20.0.0",
     "aws-cdk": "2.1007.0",
