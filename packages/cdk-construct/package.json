@@ -1,6 +1,6 @@
 {
-  "name": "cdk-construct",
-  "description": "Reusable CDK construct for a DockerImageFunction Lambda with S3 read access",
+  "name": "@pwrdrvr/crush-test-cdk",
+  "description": "CDK Construct for the Crush Test project",
   "repository": {
     "type": "git",
     "url": "https://github.com/pwrdrvr/crush-test.git"
@@ -40,7 +40,9 @@
     "@types/node": "^20.17.30",
     "@typescript-eslint/eslint-plugin": "^8",
     "@typescript-eslint/parser": "^8",
+    "aws-cdk-lib": "2.189.0",
     "commit-and-tag-version": "^12",
+    "constructs": "10.0.5",
     "eslint": "^9",
     "eslint-import-resolver-typescript": "^4.3.2",
     "eslint-plugin-import": "^2.31.0",
@@ -57,17 +59,14 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "aws-cdk-lib": "^2.136.0",
+    "aws-cdk-lib": "^2.189.0",
     "constructs": "^10.0.5"
   },
   "keywords": [
     "cdk"
   ],
   "main": "lib/index.js",
-  "license": "Apache-2.0",
-  "publishConfig": {
-    "access": "public"
-  },
+  "license": "MIT",
   "version": "0.0.0",
   "jest": {
     "coverageProvider": "v8",

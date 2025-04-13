@@ -7,14 +7,8 @@ describe('CrushTest Construct', () => {
     const app = new App();
     const stack = new Stack(app, 'TestStack');
 
-    // Minimal mock for DockerImageCode to avoid asset bundling in unit test
-    const mockDockerImageCode = {
-      bind: () => ({ imageUri: 'dummy' }),
-      _bind: () => ({ imageUri: 'dummy' }),
-    } as any;
     new CrushTest(stack, 'TestFunction', {
       functionName: 'MyTestFunction',
-      dockerImageCode: mockDockerImageCode,
       environment: { FOO: 'bar' },
       memorySize: 4096,
     });
