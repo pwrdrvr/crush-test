@@ -70,10 +70,12 @@ export const handler: Handler<TestPayload> = async (event) => {
   let k6JsonRequested = false;
   if (event.tool === 'k6') {
     // Ensure that we save the summary output to a json file
-    k6JsonRequested = args.some(arg => arg.startsWith('--summary-export'));
-    if (!k6JsonRequested) {
-      args.push('--summary-export', `${k6JsonPath}`);
-    }
+    const hasSummaryExport = args.includes('--summary-export');
+    const hasQuiet = args.includes('-q');
+    const prependArgs: string[] = [];
+    if (!hasSummaryExport) prependArgs.push('--summary-export', k6JsonPath);
+    if (!hasQuiet) prependArgs.push('-q');
+    args = [...prependArgs, ...args];
     // If the test profile is present, ensure it's the last arg (k6 expects script last)
     if (testProfilePath) {
       // Remove if already present (avoid duplicate)
