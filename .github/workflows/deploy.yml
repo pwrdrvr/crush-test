@@ -90,7 +90,7 @@ jobs:
           path: cdk-consumer-test
 
       - name: Install packaged construct
-        working-directory: packages/cdk
+        working-directory: cdk-consumer-test
         run: |
           npm install ./crush-test-cdk*.tgz
 
