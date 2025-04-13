@@ -1,4 +1,8 @@
-// Usage: node trim-precision.js input.json output.json
+/*
+ * Usage:
+ *   node trim-precision.js input.json output.json [--ms]
+ *   --ms: multiply all time values by 1000 before rounding (for OHA seconds to ms)
+ */
 const fs = require('fs');
 
 function isRateKey(key) {
@@ -7,22 +11,25 @@ function isRateKey(key) {
 function isTimeKey(key) {
   return /time|duration|latency|fastest|slowest|average|avg|min|max|med|p\d{2,3}|p\(\d{2,3}\)/i.test(key);
 }
-function roundValue(key, value) {
+function roundValue(key, value, multiplyMs) {
   if (typeof value !== 'number') return value;
   if (isRateKey(key)) return Number(value.toFixed(1));
-  if (isTimeKey(key)) return Number(value.toFixed(2));
+  if (isTimeKey(key)) {
+    if (multiplyMs) value = value * 1000;
+    return Number(value.toFixed(2));
+  }
   return value;
 }
-function processObject(obj) {
+function processObject(obj, multiplyMs) {
   if (Array.isArray(obj)) {
-    return obj.map(processObject);
+    return obj.map((v) => processObject(v, multiplyMs));
   } else if (obj && typeof obj === 'object') {
     const out = {};
     for (const [k, v] of Object.entries(obj)) {
       if (typeof v === 'object' && v !== null) {
-        out[k] = processObject(v);
+        out[k] = processObject(v, multiplyMs);
       } else {
-        out[k] = roundValue(k, v);
+        out[k] = roundValue(k, v, multiplyMs);
       }
     }
     return out;
@@ -30,44 +37,21 @@ function processObject(obj) {
   return obj;
 }
 
-// Handles double-encoded JSON in "body" fields
-function tryParseBody(obj) {
-  if (obj && typeof obj === 'object' && obj.body && typeof obj.body === 'string') {
-    try {
-      const parsed = JSON.parse(obj.body);
-      obj.body = parsed;
-      return obj;
-    } catch {}
-  }
-  return obj;
-}
-
 function main() {
   if (process.argv.length < 4) {
-    console.error('Usage: node trim-precision.js input.json output.json');
+    console.error('Usage: node trim-precision.js input.json output.json [--ms]');
     process.exit(1);
   }
-  const [input, output] = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const input = args[0];
+  const output = args[1];
+  const multiplyMs = args.includes('--ms');
+
   let raw = fs.readFileSync(input, 'utf8');
   let data = JSON.parse(raw);
 
-  // Try to parse double-encoded body if present
-  data = tryParseBody(data);
-  if (data.body && typeof data.body === 'object' && data.body.stdout && typeof data.body.stdout.value === 'string') {
-    // OHA: stdout.value is a JSON string
-    try {
-      data.body.stdout.value = JSON.parse(data.body.stdout.value);
-    } catch {}
-  }
-  if (data.body && typeof data.body === 'object' && data.body.summaryExportField && typeof data.body.summaryExportField.value === 'string') {
-    // k6: summaryExportField.value is a JSON string
-    try {
-      data.body.summaryExportField.value = JSON.parse(data.body.summaryExportField.value);
-    } catch {}
-  }
-
   // Recursively process all objects
-  const processed = processObject(data);
+  const processed = processObject(data, multiplyMs);
 
   // Re-encode any fields that were originally strings
   if (processed.body && typeof processed.body === 'object' && processed.body.stdout && typeof processed.body.stdout.value === 'object') {
