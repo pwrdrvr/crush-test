@@ -44,6 +44,9 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    concurrency:
+      group: deploy-${{ github.workflow }}-${{ github.event.pull_request.number || 'main' }}
+      cancel-in-progress: false
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
@@ -73,10 +76,13 @@ jobs:
   deploy-packaged:
     name: Deploy Packaged
     runs-on: ubuntu-latest
-    needs: deploy
+    needs: build
     permissions:
       contents: read
       id-token: write
+    concurrency:
+      group: deploy-packaged-${{ github.workflow }}-${{ github.event.pull_request.number || 'main' }}
+      cancel-in-progress: false
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
     steps:
       - name: Checkout CDK only (sparse)
