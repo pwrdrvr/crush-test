@@ -18,7 +18,7 @@
     "clean:tsbuildinfo": "npm exec --workspaces -- npx rimraf tsconfig.tsbuildinfo"
   },
   "keywords": ["load-testing", "aws-lambda", "oha", "k6"],
-  "author": "",
+  "author": "PwrDrvr LLC",
   "license": "MIT",
   "devDependencies": {
     "rimraf": "6.0.1"
