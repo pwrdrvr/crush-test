@@ -91,6 +91,7 @@ export const handler: Handler<TestPayload> = async (event) => {
   const { stdout, stderr, exitCode } = await runProcess(event.tool, args, env);
 
   let stdoutField: { type: string; value: any };
+  let summaryExportField: { type: string; value: any } | undefined = undefined;
 
   if (event.tool === 'oha' && stdout) {
     // With oha's -j flag, the output should be JSON
@@ -102,19 +103,18 @@ export const handler: Handler<TestPayload> = async (event) => {
       stdoutField = { type: 'text', value: stdout };
     }
   } else if (event.tool === 'k6') {
-     // With k6's --summary-export flag, the output should be JSON
-     try {
-        if (fs.existsSync(k6JsonPath)) {
-          const k6JsonRaw = fs.readFileSync(k6JsonPath, 'utf-8');
-          const parsedOutput = JSON.parse(k6JsonRaw);
-          stdoutField = { type: 'json', value: parsedOutput };
-        } else {
-          console.error('K6 JSON output file not found:', k6JsonPath);
-          stdoutField = { type: 'text', value: stdout };
-        }
+    // Always pass through k6 stdout as text
+    stdoutField = { type: 'text', value: stdout };
+    try {
+      if (fs.existsSync(k6JsonPath)) {
+        const k6JsonRaw = fs.readFileSync(k6JsonPath, 'utf-8');
+        const parsedOutput = JSON.parse(k6JsonRaw);
+        summaryExportField = { type: 'json', value: parsedOutput };
+      } else {
+        console.error('K6 JSON output file not found:', k6JsonPath);
+      }
     } catch (e) {
       console.error('Failed to parse K6 JSON output:', e);
-      stdoutField = { type: 'text', value: stdout };
     }
   } else {
     stdoutField = { type: 'text', value: stdout };
@@ -122,13 +122,18 @@ export const handler: Handler<TestPayload> = async (event) => {
 
   console.log('Returning result');
 
+  let responseBody: any = {
+    stdout: stdoutField,
+    stderr,
+    exitCode
+  };
+  if (event.tool === 'k6' && typeof summaryExportField !== 'undefined') {
+    responseBody.summaryExport = summaryExportField;
+  }
+
   return {
     statusCode: exitCode === 0 ? 200 : 500,
-    body: JSON.stringify({
-      stdout: stdoutField,
-      stderr,
-      exitCode
-    })
+    body: JSON.stringify(responseBody)
   };
 };
 
