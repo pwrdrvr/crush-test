@@ -10,8 +10,9 @@
     "docker:build": "npm run build && docker build -t load-test-lambda -f docker/Dockerfile ."
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "private": true,
+  "author": "PwrDrvr LLC",
+  "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.0.0",
     "aws-cdk-lib": "2.189.0",
