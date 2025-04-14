@@ -19,7 +19,7 @@ export interface CrushTestProps {
   /**
    * The Docker image code to use for the Lambda.
    * This should be a DockerImageCode instance, typically from an ECR asset or image URI.
-   * 
+   *
    * @default A Docker image built from the local Dockerfile and bundled JS in the `lambda` directory.
    */
   readonly dockerImageCode?: lambda.DockerImageCode;
