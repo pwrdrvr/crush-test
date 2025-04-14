@@ -1,0 +1,65 @@
+name: Package and Publish
+
+# Controls when the action will run.
+on:
+  release:
+    types: [published]
+  # push:
+  #   branches:
+  #     - main
+
+jobs:
+  install-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/configure-nodejs
+        with:
+          lookup-only: 'true' # We only want to lookup from the cache - if a hit, this job does nothing
+
+  publish:
+    needs:
+      - install-deps
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/configure-nodejs
+
+      # Note: We do NOT want to use `npm version` here to apply the version
+      # to the package.json files with `--workspaces`.
+      # `npm version --workspaces` will reinstall modules, defeating the purpose of caching
+      # `npm version --workspaces` will also update the package-lock.json and package.json
+      # files which will change our cache key and cause the node_modules
+      # to be saved to the cache at the end of this job, even though it didn't
+      # install the modules.
+      - name: Set version for PR or from Tag
+        run: |
+          VERSION_TO_USE=$(npm version from-git --allow-same-version --no-git-tag-version)
+          echo "Version is ${VERSION_TO_USE}"
+          scripts/version ${VERSION_TO_USE}
+
+      - name: Build
+        run: |
+          npm run build
+          npm run build -w packages/lambda
+
+      - name: Package the Construct
+        run: |
+          npm run compile -w packages/cdk-construct
+          npm run post-compile -w packages/cdk-construct
+          npm run test -w packages/cdk-construct
+          npm run package -w packages/cdk-construct
+
+      - name: NPM registry authentication
+        run: npm set //registry.npmjs.org/:_authToken ${{ secrets.NPMJSORG_PUBLISH_TOKEN }}
+
+      - name: Release cdk-construct - NPM
+        id: cdk-construct-npm
+        working-directory: packages/cdk-construct
+        run: |
+          npm publish
