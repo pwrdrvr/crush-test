@@ -2,6 +2,9 @@
 
 A CDK construct for deploying the Crush Test Lambda, enabling you to run high-performance load tests (using [`oha`](https://github.com/hatoo/oha) or [`k6`](https://k6.io/)) directly from AWS Lambda.
 
+**Key use case:**  
+When running performance tests as part of CI/CD (e.g., GitHub Actions), you can use this construct to run your load tests in the same AWS Region as your deployed service. This ensures the most consistent and lowest round-trip time (RTT) between the test tool and the service being tested, avoiding the variability and latency of running tests from external GitHub Runners.
+
 ---
 
 ## 📖 API Reference
