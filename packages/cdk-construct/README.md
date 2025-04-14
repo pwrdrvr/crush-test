@@ -28,35 +28,49 @@ yarn add @pwrdrvr/crush-test-cdk
 
 ---
 
-## 🏷️ Default Naming Conventions
+## 🏷️ Naming Conventions
 
 - By default, the Lambda function name is set by the AWS CDK as `${stackName}-${id}`.
 - You can override the function name using the `functionName` property in the construct props.
 
 ---
 
-## 🧩 Creating Multiple Lambda Variants (Manual Approach)
+## 🧩 Usage Example
 
-To run load tests with different CPU/RAM configurations, create three instances of the `CrushTest` construct with different `memorySize` values. AWS Lambda allocates vCPUs based on memory size (1 vCPU per 1769 MB, with a little extra RAM recommended to avoid throttling).
+Below is a minimal example of how to use the `CrushTest` construct in your own stack. For a more complete example, see the [example stack](../cdk/src/stack.ts).
 
-| Variant | Memory (MB) | vCPUs (approx) | Example ID / Name         |
-|---------|-------------|----------------|---------------------------|
-| Small   | 1769        | 1              | `LoadTestSmall`           |
-| Medium  | 3538        | 2              | `LoadTestMedium`          |
-| Large   | 7076        | 4              | `LoadTestLarge`           |
-
-**Example (TypeScript):**
 ```ts
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
 import { CrushTest } from '@pwrdrvr/crush-test-cdk';
 
-// 1 vCPU
-new CrushTest(stack, 'LoadTestSmall', { memorySize: 1769 });
+export class MyLoadTestStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
 
-// 2 vCPU
-new CrushTest(stack, 'LoadTestMedium', { memorySize: 3538 });
+    // Deploy a single CrushTest Lambda with 2GB memory (default)
+    new CrushTest(this, 'LoadTestFunction', {
+      // functionName: 'my-custom-function-name', // Optional
+      // environment: { KEY: 'value' },           // Optional
+      // memorySize: 2048,                        // Optional, default is 2048
+    });
+  }
+}
+```
 
-// 4 vCPU
-new CrushTest(stack, 'LoadTestLarge', { memorySize: 7076 });
+### Example: Multiple Lambda Functions with Different Memory Sizes
+
+The example app (`packages/cdk/src/stack.ts`) shows how to deploy multiple Lambda functions with different memory sizes:
+
+```ts
+// 2 GB Lambda (default)
+new CrushTest(this, 'LoadTestFunction2GB', { memorySize: 2048 });
+
+// 4 GB Lambda
+new CrushTest(this, 'LoadTestFunction4GB', { memorySize: 4096 });
+
+// 8 GB Lambda
+new CrushTest(this, 'LoadTestFunction8GB', { memorySize: 8192 });
 ```
 
 ---
@@ -81,16 +95,3 @@ See [API.md](https://github.com/pwrdrvr/crush-test/blob/main/packages/cdk-constr
 ## 📝 License
 
 MIT License. See [LICENSE](./LICENSE) for details.
-
----
-
-## 📊 Architecture Diagram
-
-```mermaid
-graph TD
-    A[CDK Stack] --> B1[CrushTest (1 vCPU)]
-    A[CDK Stack] --> B2[CrushTest (2 vCPU)]
-    A[CDK Stack] --> B3[CrushTest (4 vCPU)]
-    B1 --> L1[Lambda Function (1769 MB)]
-    B2 --> L2[Lambda Function (3538 MB)]
-    B3 --> L3[Lambda Function (7076 MB)]
