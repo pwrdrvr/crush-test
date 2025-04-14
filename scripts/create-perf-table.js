@@ -95,6 +95,7 @@ function main() {
   const ohaPackaged = args['oha-packaged'];
   const k6Packaged = args['k6-packaged'];
   const output = args['output'] || 'perf.md';
+  const shortOutput = 'perf-short.md';
 
   if (!ohaDeploy || !k6Deploy || !ohaPackaged || !k6Packaged) {
     console.error('Missing required arguments.');
@@ -119,26 +120,31 @@ function main() {
     'k6'
   );
 
-  // Build Markdown table
-  let md = [];
-  md.push('### 🚀 Performance Test Results\n');
-  md.push('| Metric | Deploy Oha | Deploy K6 | Deploy Packaged Oha | Deploy Packaged K6 |');
-  md.push('|--------|-----------:|----------:|--------------------:|-------------------:|');
-  md.push(`| Total Requests | ${ohaDeployMetrics.total} | ${k6DeployMetrics.total} | ${ohaPackagedMetrics.total} | ${k6PackagedMetrics.total} |`);
-  md.push(`| Overall RPS | ${ohaDeployMetrics.rps} | ${k6DeployMetrics.rps} | ${ohaPackagedMetrics.rps} | ${k6PackagedMetrics.rps} |`);
-  md.push(`| Min Response Time (ms) | ${ohaDeployMetrics.min} | ${k6DeployMetrics.min} | ${ohaPackagedMetrics.min} | ${k6PackagedMetrics.min} |`);
-  md.push(`| p50 Response Time (ms) | ${ohaDeployMetrics.p50} | ${k6DeployMetrics.p50} | ${ohaPackagedMetrics.p50} | ${k6PackagedMetrics.p50} |`);
-  md.push(`| p90 Response Time (ms) | ${ohaDeployMetrics.p90} | ${k6DeployMetrics.p90} | ${ohaPackagedMetrics.p90} | ${k6PackagedMetrics.p90} |`);
-  md.push(`| p95 Response Time (ms) | ${ohaDeployMetrics.p95} | ${k6DeployMetrics.p95} | ${ohaPackagedMetrics.p95} | ${k6PackagedMetrics.p95} |`);
+  // Build Markdown table (shared)
+  const tableLines = [];
+  tableLines.push('### 🚀 Performance Test Results\n');
+  tableLines.push('| Metric | Deploy Oha | Deploy K6 | Deploy Packaged Oha | Deploy Packaged K6 |');
+  tableLines.push('|--------|-----------:|----------:|--------------------:|-------------------:|');
+  tableLines.push(`| Total Requests | ${ohaDeployMetrics.total} | ${k6DeployMetrics.total} | ${ohaPackagedMetrics.total} | ${k6PackagedMetrics.total} |`);
+  tableLines.push(`| Overall RPS | ${ohaDeployMetrics.rps} | ${k6DeployMetrics.rps} | ${ohaPackagedMetrics.rps} | ${k6PackagedMetrics.rps} |`);
+  tableLines.push(`| Min Response Time (ms) | ${ohaDeployMetrics.min} | ${k6DeployMetrics.min} | ${ohaPackagedMetrics.min} | ${k6PackagedMetrics.min} |`);
+  tableLines.push(`| p50 Response Time (ms) | ${ohaDeployMetrics.p50} | ${k6DeployMetrics.p50} | ${ohaPackagedMetrics.p50} | ${k6PackagedMetrics.p50} |`);
+  tableLines.push(`| p90 Response Time (ms) | ${ohaDeployMetrics.p90} | ${k6DeployMetrics.p90} | ${ohaPackagedMetrics.p90} | ${k6PackagedMetrics.p90} |`);
+  tableLines.push(`| p95 Response Time (ms) | ${ohaDeployMetrics.p95} | ${k6DeployMetrics.p95} | ${ohaPackagedMetrics.p95} | ${k6PackagedMetrics.p95} |`);
 
-  // Add details blocks for raw JSON
+  // Full version with details blocks
+  let md = [...tableLines];
   md.push(addDetailsBlock('Deploy Oha', ohaDeployMetrics.raw));
   md.push(addDetailsBlock('Deploy K6', k6DeployMetrics.raw));
   md.push(addDetailsBlock('Deploy Packaged Oha', ohaPackagedMetrics.raw));
   md.push(addDetailsBlock('Deploy Packaged K6', k6PackagedMetrics.raw));
-
   fs.writeFileSync(output, md.join('\n'));
   console.log(`Performance summary written to ${output}`);
+
+  // Short version (no details blocks)
+  let mdShort = [...tableLines];
+  fs.writeFileSync(shortOutput, mdShort.join('\n'));
+  console.log(`Short performance summary written to ${shortOutput}`);
 }
 
 main();

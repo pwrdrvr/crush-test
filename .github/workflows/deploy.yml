@@ -240,7 +240,7 @@ jobs:
         run: |
           git fetch origin main
           git pull --rebase origin main
-          node scripts/update-readme-perf-table.js perf.md README.md
+          node scripts/update-readme-perf-table.js perf-short.md README.md
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add README.md
