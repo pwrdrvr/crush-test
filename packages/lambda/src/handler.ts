@@ -138,7 +138,10 @@ export const handler: Handler<TestPayload> = async (event) => {
     ...(event.tool === 'k6' && typeof summaryExportField !== 'undefined' ? { summaryExportField } : {}),
     stderr,
     exitCode,
-    request: requestEcho
+    request: requestEcho,
+    metadata: {
+      version: pkg.version
+    }
   };
 
   return {
