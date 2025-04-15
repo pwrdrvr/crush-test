@@ -1,5 +1,7 @@
 # @pwrdrvr/crush-test-cdk
 
+> **Looking for the full project documentation? See the [project root README](../../README.md).**
+
 A CDK construct for deploying the Crush Test Lambda, enabling you to run high-performance load tests (using [`oha`](https://github.com/hatoo/oha) or [`k6`](https://k6.io/)) directly from AWS Lambda.
 
 **Key use case:**  
