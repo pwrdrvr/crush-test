@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "tsc --build tsconfig.json",
+    "build": "tsc --build tsconfig.json && npm run build -w packages/lambda",
     "build:construct": "npm run build -w packages/cdk-construct",
     "test": "npm run test --workspaces",
     "deploy": "npm run deploy -w packages/cdk",
