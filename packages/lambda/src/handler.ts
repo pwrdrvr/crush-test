@@ -4,6 +4,9 @@ import { spawn } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
 
+import pkg from '../package.json';
+console.log('Lambda package version:', pkg.version);
+
 interface TestPayload {
   tool: 'oha' | 'k6';
   args: string[];
