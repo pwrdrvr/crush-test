@@ -1,10 +1,12 @@
 import { awscdk } from 'projen';
-import { NodePackageManager } from 'projen/lib/javascript';
+import { NodePackageManager, NpmAccess } from 'projen/lib/javascript';
 const project = new awscdk.AwsCdkConstructLibrary({
-  author: 'Harold Hunt',
+  author: 'PwrDrvr LLC',
   authorAddress: 'harold@pwrdrvr.com',
-  authorName: 'PwrDrvr LLC',
+  authorOrganization: true,
   cdkVersion: '2.189.0',
+  copyrightOwner: 'PwrDrvr LLC',
+  copyrightPeriod: '2025',
   defaultReleaseBranch: 'main',
   description: 'CDK Construct for the Crush Test project',
   jsiiVersion: '~5.8.0',
@@ -13,6 +15,9 @@ const project = new awscdk.AwsCdkConstructLibrary({
   projenrcTs: true,
   packageManager: NodePackageManager.NPM,
   repositoryUrl: 'https://github.com/pwrdrvr/crush-test.git',
+  keywords: ['awscdk', 'lambda', 'load-test', 'oha', 'k6'],
+  npmAccess: NpmAccess.PUBLIC,
+  minNodeVersion: '20.0.0',
   // deps: [],                /* Runtime dependencies of this module. */
   // devDeps: [],             /* Build dependencies for this module. */
   // packageName: undefined,  /* The "name" in package.json. */

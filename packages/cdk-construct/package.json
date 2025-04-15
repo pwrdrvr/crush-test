@@ -32,12 +32,12 @@
   "author": {
     "name": "PwrDrvr LLC",
     "email": "harold@pwrdrvr.com",
-    "organization": false
+    "organization": true
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^2",
     "@types/jest": "^29.5.14",
-    "@types/node": "^20.17.30",
+    "@types/node": "^20",
     "@typescript-eslint/eslint-plugin": "^8",
     "@typescript-eslint/parser": "^8",
     "aws-cdk-lib": "2.189.0",
@@ -63,10 +63,21 @@
     "constructs": "^10.0.5"
   },
   "keywords": [
-    "cdk"
+    "awscdk",
+    "cdk",
+    "k6",
+    "lambda",
+    "load-test",
+    "oha"
   ],
+  "engines": {
+    "node": ">= 20.0.0"
+  },
   "main": "lib/index.js",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "version": "0.0.0",
   "jest": {
     "coverageProvider": "v8",
