@@ -1,6 +1,6 @@
 {
   "name": "cdk-consumer-test",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "bin": {
     "cdk-consumer-test": "bin/cdk-consumer-test.js"
   },

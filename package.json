@@ -1,6 +1,6 @@
 {
   "name": "crush-test",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Lambda-based load testing service using oha and k6",
   "private": true,
   "workspaces": [
