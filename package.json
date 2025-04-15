@@ -17,11 +17,16 @@
     "clean:modules": "npm exec --workspaces -- npx rimraf node_modules && npx rimraf node_modules",
     "clean:tsbuildinfo": "npm exec --workspaces -- npx rimraf tsconfig.tsbuildinfo"
   },
-  "keywords": ["load-testing", "aws-lambda", "oha", "k6"],
+  "keywords": [
+    "load-testing",
+    "aws-lambda",
+    "oha",
+    "k6"
+  ],
   "author": "PwrDrvr LLC",
   "license": "MIT",
   "devDependencies": {
-    "glob": "9.3.5",
+    "glob": "^7.1.3",
     "rimraf": "6.0.1",
     "semver": "7.7.1"
   }
