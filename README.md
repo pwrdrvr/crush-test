@@ -110,11 +110,11 @@ MIT License. See [LICENSE](./packages/cdk-construct/LICENSE) for details.
 
 | Metric | Deploy Oha | Deploy K6 | Deploy Packaged Oha | Deploy Packaged K6 |
 |--------|-----------:|----------:|--------------------:|-------------------:|
-| Total Requests | 10 | 1,564 | 10 | 1,603 |
-| Overall RPS | 1,680.5 | 520.5 | 1,824.6 | 533.6 |
-| Min Response Time (ms) | 2.23 | 2.76 | 2.20 | 2.08 |
-| p50 Response Time (ms) | 8.23 | 10.44 | 7.56 | 2.78 |
-| p90 Response Time (ms) | 26.30 | 35.54 | 27.14 | 3.96 |
-| p95 Response Time (ms) | 35.40 | 40.02 | 36.57 | 4.52 |
+| Total Requests | 10 | 1,211 | 10 | 1,598 |
+| Overall RPS | 381.4 | 403.0 | 1,427.0 | 532.0 |
+| Min Response Time (ms) | 2.35 | 2.23 | 2.75 | 2.34 |
+| p50 Response Time (ms) | 7.74 | 5.21 | 6.40 | 3.57 |
+| p90 Response Time (ms) | 18.30 | 620.62 | 17.82 | 6.95 |
+| p95 Response Time (ms) | 21.31 | 890.61 | 31.12 | 9.48 |
 
 <!-- perf-table:end -->
