@@ -1,6 +1,6 @@
 {
   "name": "cdk",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "CDK stack for the load testing Lambda function",
   "main": "dist/app.js",
   "scripts": {

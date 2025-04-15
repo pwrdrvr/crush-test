@@ -97,6 +97,9 @@
           "exec": "mkdir -p ./lib/lambda"
         },
         {
+          "exec": "cd ../lambda && npm run build"
+        },
+        {
           "exec": "cp -R ../lambda/dist ./lib/lambda/"
         },
         {

@@ -29,7 +29,8 @@ project.compileTask.exec('rm -rf ./lib/lambda');
 // Make directory for the Lambda
 project.compileTask.exec('mkdir -p ./lib/lambda');
 
-// TODO: esbuild the Lambda
+// esbuild the Lambda
+project.compileTask.exec('cd ../lambda && npm run build');
 
 // Copy the esbuild output of the Lambda
 project.compileTask.exec('cp -R ../lambda/dist ./lib/lambda/');

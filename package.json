@@ -1,13 +1,13 @@
 {
   "name": "crush-test",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Lambda-based load testing service using oha and k6",
   "private": true,
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "build": "tsc --build tsconfig.json",
+    "build": "tsc --build tsconfig.json && npm run build -w packages/lambda",
     "build:construct": "npm run build -w packages/cdk-construct",
     "test": "npm run test --workspaces",
     "deploy": "npm run deploy -w packages/cdk",
