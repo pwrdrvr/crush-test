@@ -85,7 +85,7 @@ Any labels you include in the `labels` field of your payload are echoed back in 
 
 ---
 
-## ⚠️ CPU Limit and Throttling
+## ⚠️ CPU Limit and CPU Throttling
 
 **Important:**  
 Take care to avoid hitting the CPU limit of the Lambda function. If the Lambda is throttled due to CPU exhaustion, the timing and accuracy of your performance tests will be impacted. For best results, allocate sufficient memory (and thus CPU) to your Lambda function for your expected test load.
@@ -94,7 +94,27 @@ Take care to avoid hitting the CPU limit of the Lambda function. If the Lambda i
 
 ## 📦 Example Responses
 
-Full example oha and k6 response files are included at the bottom of this README.
+Example response files for both oha and k6 are provided:
+
+- [samples/response-oha.json](./samples/response-oha.json)
+- [samples/response-k6.json](./samples/response-k6.json)
+
+Example responses with body extracted and `JSON.parse`d are also provided:
+
+- [samples/response-oha.body.json](./samples/response-oha.body.json)
+- [samples/response-k6.body.json](./samples/response-k6.body.json)
+
+The structure of these responses is defined by the output of:
+- `oha -j` (for oha)
+- `k6 --summary-export` (for k6)
+
+**Caveats:**
+- Time values in k6's output are in **milliseconds (ms)**.
+- Time values in oha's output are in **seconds**.
+
+You may find these scripts useful for parsing or post-processing the returned results:
+- [scripts/extract-body.js](./scripts/extract-body.js)
+- [scripts/trim-precision.js](./scripts/trim-precision.js)
 
 ---
 
