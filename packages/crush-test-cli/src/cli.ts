@@ -32,10 +32,24 @@ export async function runCrushTestCli(tool: "k6" | "oha", argv: string[]) {
     }
   }
 
+  // Collect env vars to send
+  const envVars: Record<string, string> = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (
+      key.startsWith("TOKIO_") ||
+      key.startsWith("K6_") ||
+      key.startsWith("OHA_") ||
+      key === "TARGET_URL"
+    ) {
+      envVars[key] = value as string;
+    }
+  }
+
   // Prepare payload
   const payload: any = {
     tool,
     args: filteredArgs,
+    ...(Object.keys(envVars).length > 0 ? { env: envVars } : {})
   };
   if (testProfileBase64) {
     payload.testProfile = { base64Content: testProfileBase64 };
